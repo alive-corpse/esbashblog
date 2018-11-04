@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-# BashBlog, a simple blog system written in a single bash script
+# Forked at 2018 from BashBlog by Evgeniy Shumilov <evgeniy.shumilov@gmail.com>
+
+# BashBlog is a simple blog system written in a single bash script
 # (C) Carlos Fenollosa <carlos.fenollosa@gmail.com>, 2011-2016 and contributors
 # https://github.com/carlesfe/bashblog/contributors
 # Check out README.md for more details
@@ -11,13 +13,14 @@
 # Config file. Any settings "key=value" written there will override the
 # global_variables defaults. Useful to avoid editing bb.sh and having to deal
 # with merges in VCS
-global_config=".config"
+
+global_config="etc/.config"
 
 # This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
 global_variables() {
-    global_software_name="BashBlog"
-    global_software_version="2.8"
+    global_software_name="ESBashBlog"
+    global_software_version="1.0"
 
     # Blog title
     global_title="My fancy blog"
@@ -153,6 +156,7 @@ global_variables() {
     # You can change it to path on your computer, if you write posts locally
     # before copying them to the server
     preview_url=""
+
 
     # Markdown location. Trying to autodetect by default.
     # The invocation must support the signature 'markdown_bin in.md > out.html'
@@ -877,7 +881,7 @@ list_posts() {
     n=1
     while IFS='' read -r i; do
         is_boilerplate_file "$i" && continue
-        line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format")"
+        line="$n # $(get_post_title "$i") # $(LC_ALL=$date_locale date -r "$i" +"$date_format") # $(echo "$i" | sed 's#^\./##')"
         lines+=$line\\n
         n=$(( n + 1 ))
     done < <(ls -t ./*.html)
@@ -1109,27 +1113,38 @@ date_version_detect() {
     fi    
 }
 
+# Init function
+# Check directory structure and create new one if not exists
+init() {
+    cd `dirname "$0"`
+    cur_path=`pwd`
+    for d in plugins templates etc backups htdocs; do
+        [ -d "$d" ] || mkdir -p "./$d"
+    done
+}
+
 # Main function
 # Encapsulated on its own function for readability purposes
 #
 # $1     command to run
 # $2     file name of a draft to continue editing (optional)
 do_main() {
+    # Creating directory structure
+    init
     # Detect if using BSD date or GNU date
     date_version_detect
     # Load default configuration, then override settings with the config file
     global_variables
-    [[ -f $global_config ]] && source "$global_config" &> /dev/null 
+    cpath=`pwd`
+    [[ -f "$cpath/$global_config" ]] && source "$cpath/$global_config" &> /dev/null 
     global_variables_check
-
     # Check for $EDITOR
     [[ -z $EDITOR ]] && 
         echo "Please set your \$EDITOR environment variable. For example, to use nano, add the line 'export EDITOR=nano' to your \$HOME/.bashrc file" && exit
-
     # Check for validity of argument
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
         usage && exit
-
+    cd ./htdocs
     [[ $1 == list ]] &&
         list_posts && exit
 
@@ -1137,28 +1152,41 @@ do_main() {
         list_tags "$@" && exit
 
     if [[ $1 == edit ]]; then
-        if (($# < 2)) || [[ ! -f ${!#} ]]; then
+        if [ -z "$2" ]; then
+            posts=`list_posts`
+            echo "$posts"
+            [ -n "$( echo "$posts" | grep '^No posts yet')" ] && exit 0
+            read -p "Please enter filename or record number to edit (empty for exit): " record
+            [ -z "$record" ] && exit 0
+            if [ -n "$( echo "$record" | grep '^[0-9]\+$' )" ]; then
+                recfname=`echo "$posts" | awk '$1~/^'$record'$/ { print $NF }'`
+            else
+                recfname="$( echo "$record" | sed 's#^.*/##' )"
+                [[ ! -f "$recfname" ]] && echo "File with name $recfname is not exists" && exit 1
+            fi
+        elif [[ ! -f ${!#} ]]; then
             echo "Please enter a valid .md or .html file to edit"
             exit
+        else
+            recfname="${!#}"
         fi
     fi
 
     # Test for existing html files
     if ls ./*.html &> /dev/null; then
         # We're going to back up just in case
-        tar -c -z -f ".backup.tar.gz" -- *.html &&
-            chmod 600 ".backup.tar.gz"
+        tar -c -z -f "../backups/backup.tar.gz" -- *.html &&
+            chmod 600 "../backups/backup.tar.gz"
     elif [[ $1 == rebuild ]]; then
         echo "Can't find any html files, nothing to rebuild"
         exit
     fi
 
     # Keep first backup of this day containing yesterday's version of the blog
-    [[ ! -f .yesterday.tar.gz || $(date -r .yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
-        cp .backup.tar.gz .yesterday.tar.gz &> /dev/null
+    [[ ! -f ../backups/yesterday.tar.gz || $(date -r ../backups/yesterday.tar.gz +'%d') != "$(date +'%d')" ]] &&
+        cp ../backups/backup.tar.gz ../backups/yesterday.tar.gz &> /dev/null
 
-    [[ $1 == reset ]] &&
-        reset && exit
+    [[ $1 == reset ]] && reset && exit
 
     create_css
     create_includes
@@ -1167,11 +1195,11 @@ do_main() {
     [[ $1 == delete ]] && rm "$2" &> /dev/null && rebuild_tags
     if [[ $1 == edit ]]; then
         if [[ $2 == -n ]]; then
-            edit "$3"
+            edit "$recfname"
         elif [[ $2 == -f ]]; then
-            edit "$3" full
+            edit "$recfname" full
         else
-            edit "$2" keep
+            edit "$recfname" keep
         fi
     fi
     rebuild_index
