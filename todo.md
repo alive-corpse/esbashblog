@@ -11,6 +11,7 @@ Features for realisation
 - [ ] Dark theme
 - [ ] Markdown support by shell script
 - [ ] Gallery support
+- [ ] Older/Newer links at the end of index pages (index.html, index1.html, ... , index2.html)
 
 Bug than should be fixed
 ------------------------
