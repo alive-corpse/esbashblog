@@ -10,6 +10,7 @@ Features for realisation
 - [ ] Themes support with switcher by bb function
 - [ ] Dark theme
 - [ ] Markdown support by shell script
+- [ ] Gallery support
 
 Bug than should be fixed
 ------------------------
