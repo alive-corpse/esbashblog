@@ -13,5 +13,5 @@ Features for realisation
 
 Bug than should be fixed
 ------------------------
-- [ ] Pervent rewriting timestamps from from files modify dates
+- [ ] Pervent rewriting timestamps from files modify dates
 
