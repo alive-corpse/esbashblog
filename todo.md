@@ -12,8 +12,10 @@ Features for realisation
 - [ ] Markdown support by shell script
 - [ ] Gallery support
 - [ ] Older/Newer links at the end of index pages (index.html, index1.html, ... , index2.html)
+- [ ] Integration with bbhttpd
 
-Bug than should be fixed
+Bugs than should be fixed
 ------------------------
 - [ ] Pervent rewriting timestamps from files modify dates
+- [ ] Working with drafts
 
