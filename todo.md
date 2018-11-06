@@ -17,6 +17,6 @@ Features for realisation
 
 Bugs than should be fixed
 ------------------------
-- [ ] Pervent rewriting timestamps from files modify dates
+- [x] Pervent rewriting timestamps from files modify dates
 - [ ] Working with drafts
 

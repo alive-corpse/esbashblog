@@ -14,7 +14,7 @@
 # global_variables defaults. Useful to avoid editing bb.sh and having to deal
 # with merges in VCS
 
-global_config="etc/.config"
+global_config="etc/bb.config"
 
 # This function will load all the variables defined here. They might be overridden
 # by the 'global_config' file contents
@@ -1120,7 +1120,7 @@ date_version_detect() {
 init() {
     cd `dirname "$0"`
     cur_path=`pwd`
-    for d in plugins templates etc backups htdocs; do
+    for d in bin templates etc backups htdocs; do
         [ -d "$d" ] || mkdir -p "./$d"
     done
 }
@@ -1147,6 +1147,7 @@ do_main() {
     [[ $1 != "reset" && $1 != "post" && $1 != "rebuild" && $1 != "list" && $1 != "edit" && $1 != "delete" && $1 != "tags" ]] && 
         usage && exit
     cd ./htdocs
+    grep '<!-- bashblog_timestamp: .*$' *.html | sed -e '/^\(tag_\|index.html\)/d;s/\(:[^#]*\|# .*$\)//g' | awk -F '#' '{ print "touch -a -m -t "$2" "$1 }' | sh
     [[ $1 == list ]] &&
         list_posts && exit
 
