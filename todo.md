@@ -20,4 +20,5 @@ Bugs that should be fixed
 ------------------------
 - [x] Pervent rewriting timestamps from files modify dates
 - [ ] Working with drafts
+- [ ] Every rebuilding append empy line before text end comment
 
