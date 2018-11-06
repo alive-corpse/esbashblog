@@ -14,8 +14,9 @@ Features for realisation
 - [ ] Gallery support
 - [ ] Older/Newer links at the end of index pages (index.html, index1.html, ... , index2.html)
 - [ ] Integration with bbhttpd
+- [ ] Different footer templates for posts and other pages (for comment services)
 
-Bugs than should be fixed
+Bugs that should be fixed
 ------------------------
 - [x] Pervent rewriting timestamps from files modify dates
 - [ ] Working with drafts
