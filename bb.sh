@@ -95,6 +95,12 @@ global_variables() {
     # leave blank to generate them, recommended
     header_file=""
     footer_file=""
+    # extra content in title block before title and after description
+    title_begin_file=""
+    title_end_file=""
+    # extra content in header block before and after header
+    header_begin_file=""
+    header_end_file=""
     # extra content to add just after we open the <body> tag
     # and before the actual blog content
     body_begin_file=""
@@ -441,11 +447,15 @@ create_html_page() {
         [[ -n $body_begin_file ]] && cat "$body_begin_file"
         # body divs
         echo '<div id="divbodyholder">'
-        echo '<div class="headerholder"><div class="header">'
+        echo '<div class="headerholder">'
+        [[ -f "$header_begin_file" ]] && cat "$header_begin_file"
+        echo '<div class="header">'
         # blog title
         echo '<div id="title">'
         cat .title.html
-        echo '</div></div></div>' # title, header, headerholder
+        echo '</div></div>'
+        [[ -f "$header_end_file" ]] && cat "$header_end_file"
+        echo '</div>' # title, header, headerholder
         echo '<div id="divbody"><div class="content">'
 
         file_url=${filename#./}
@@ -936,8 +946,10 @@ make_rss() {
 # generate headers, footers, etc
 create_includes() {
     {
+        [[ -f "$title_begin_file" ]] && cat "$title_begin_file"
         echo "<h1 class=\"nomargin\"><a class=\"ablack\" href=\"$global_url/$index_file\">$global_title</a></h1>" 
         echo "<div id=\"description\">$global_description</div>"
+        [[ -f "$title_end_file" ]] && cat "$title_end_file"
     } > ".title.html"
 
     if [[ -f $header_file ]]; then cp "$header_file" .header.html
