@@ -7,7 +7,6 @@ Features for realisation
 - [x] Additional transliteration example for russian language
 - [x] Logo support for header, extended contend inside and outside headerholder block
 - [ ] Different footers for posts and other pages
-- [ ] Buttons bar below header
 - [ ] Themes support with switcher by bb function
 - [ ] Dark theme
 - [ ] Markdown support by shell script
