@@ -64,8 +64,15 @@ global_variables() {
 
     # Blog generated files
     # index page of blog (it is usually good to use "index.html" here)
+    # Also if posts count more than number_of_index_articles, additional
+    # index files will be created. They will have names like
+    # index1.html, index2.html, index3.html ...
     index_file="index.html"
     number_of_index_articles="8"
+    # Next and Prev indexes labels
+    next_index="Newer posts"
+    prev_index="Older posts"
+
     # global archive
     archive_index="all_posts.html"
     tags_index="all_tags.html"
@@ -404,8 +411,10 @@ is_boilerplate_file() {
         [[ "$name" == "$item" ]] && return 0
     done
 
+    index_mask="$(echo "$index_file" | sed 's/\.html//')"
+
     case $name in
-    ( "$index_file" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
+    ( "$index_file" | "$index_mask"*".html" | "$archive_index" | "$tags_index" | "$footer_file" | "$header_file" | "$global_analytics_file" | "$prefix_tags"* )
         return 0 ;;
     ( * ) # Check for excluded
         for excl in "${html_exclude[@]}"; do
@@ -732,40 +741,73 @@ all_tags() {
 
 # Generate the index.html with the content of the latest posts
 rebuild_index() {
-    echo -n "Rebuilding the index "
-    newindexfile=$index_file.$RANDOM
-    contentfile=$newindexfile.content
-    while [[ -f $newindexfile ]]; do 
-        newindexfile=$index_file.$RANDOM
-        contentfile=$newindexfile.content
-    done
+    # Building list of articles for each of indexies files
+    indexnum=0
+    
+    articlecount=0
+    flist=''
+    number_of_index_articles=4 #TEST!
 
     # Create the content file
-    {
-        n=0
-        while IFS='' read -r i; do
-            is_boilerplate_file "$i" && continue;
-            if ((n >= number_of_index_articles)); then break; fi
-            if [[ -n $cut_do ]]; then
-                get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
-            else
-                get_html_file_content 'entry' 'entry' <"$i"
+    create_index_content() {
+        [ $indexnum -eq 0 ] && index_file_num="$index_file" || index_file_num="$(echo "$index_file" | sed 's/\.html$/'"$indexnum"'.html/')"
+        newindexfile=$index_file_num.$RANDOM
+        contentfile=$newindexfile.content
+        while [[ -f $newindexfile ]]; do 
+            newindexfile=$index_file_num.$RANDOM
+            contentfile=$newindexfile.content
+        done
+        {
+            n=0
+            for i in $(echo "$flist" | sed '/^$/d'); do
+                if [[ -n $cut_do ]]; then
+                    get_html_file_content 'entry' 'entry' 'cut' <"$i" | awk "/$cut_line/ { print \"<p class=\\\"readmore\\\"><a href=\\\"$i\\\">$template_read_more</a></p>\" ; next } 1"
+                else
+                    get_html_file_content 'entry' 'entry' <"$i"
+                fi
+                echo -n "." 1>&3
+                n=$(( n + 1 ))
+            done
+            echo 1>&3
+            feed=$blog_feed
+            [ -n $global_feedburner ] && feed=$global_feedburner
+            index_mask="$(echo "$index_file" | sed 's/\.html//')"
+            echo "<div id=\"all_posts\">"
+            [ -z $index_last ] && echo "<a href=\"$index_mask$(($indexnum + 1)).html\">$prev_index</a> &mdash; "
+            echo "<a href=\"$archive_index\">$template_archive</a> &mdash; <a href=\"$tags_index\">$template_tags_title</a> &mdash; <a href=\"$feed\">$template_subscribe</a>"
+            if ! [ $indexnum -eq 0 ]; then
+                if [ $indexnum -eq 1 ]; then
+                    echo " &mdash; <a href=\"$index_file\">$next_index</a>"
+                else
+                    echo " &mdash; <a href=\"$index_mask$(($indexnum - 1)).html\">$next_index</a>"
+                fi
             fi
-            echo -n "." 1>&3
-            n=$(( n + 1 ))
-        done < <(ls -t ./*.html) # sort by date, newest first
 
-        feed=$blog_feed
-        if [[ -n $global_feedburner ]]; then feed=$global_feedburner; fi
-        echo "<div id=\"all_posts\"><a href=\"$archive_index\">$template_archive</a> &mdash; <a href=\"$tags_index\">$template_tags_title</a> &mdash; <a href=\"$feed\">$template_subscribe</a></div>"
-    } 3>&1 >"$contentfile"
+            echo "</div>"
+        } 3>&1 >"$contentfile"
 
-    echo ""
+        create_html_page "$contentfile" "$newindexfile" yes "$global_title" "$global_author"
+        rm "$contentfile"
+        mv "$newindexfile" "$index_file_num"
+        chmod 644 "$index_file_num"
+    }
 
-    create_html_page "$contentfile" "$newindexfile" yes "$global_title" "$global_author"
-    rm "$contentfile"
-    mv "$newindexfile" "$index_file"
-    chmod 644 "$index_file"
+    while IFS='' read -r fname; do
+        if ! is_boilerplate_file "$fname"; then
+            articlecount=$(( $articlecount + 1 ))
+            if [ "$articlecount" -gt $number_of_index_articles ];then
+                echo -n "Rebuilding the index $indexnum "
+                create_index_content
+                indexnum=$(($indexnum+1))
+                articlecount=1
+                flist=''
+            fi
+            flist="$(echo "$flist"; echo "$fname")"
+        fi
+    done < <(ls -t ./*.html) # sort by date, newest first
+    index_last=1
+    echo -n "Rebuilding the index $indexnum "
+    create_index_content
 }
 
 # Finds all tags referenced in one post.
@@ -1145,6 +1187,11 @@ init() {
 do_main() {
     # Creating directory structure
     init
+    # Checking if bin/$1 is exists and starting it
+    if [ -e "./bin/$1" ]; then
+        ./bin/$1
+        exit "$?"
+    fi
     # Detect if using BSD date or GNU date
     date_version_detect
     # Load default configuration, then override settings with the config file

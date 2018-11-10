@@ -6,12 +6,10 @@ Features for realisation
 - [x] Print list of posts while editing without filename, choosing post by number of filename
 - [x] Additional transliteration example for russian language
 - [x] Logo support for header, extended contend inside and outside headerholder block
-- [ ] Different footers for posts and other pages
+- [x] Older/Newer links at the end of index pages (index.html, index1.html, ... , index2.html)
 - [ ] Themes support with switcher by bb function
 - [ ] Dark theme
 - [ ] Markdown support by shell script
-- [ ] Gallery support
-- [ ] Older/Newer links at the end of index pages (index.html, index1.html, ... , index2.html)
 - [ ] Integration with bbhttpd
 - [ ] Different footer templates for posts and other pages (for comment services)
 
