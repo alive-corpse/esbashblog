@@ -494,7 +494,7 @@ create_html_page() {
         fi
         cat "$content" # Actual content
         if [[ $index == no ]]; then
-            echo -e '\n<!-- text end -->'
+            echo -e '<!-- text end -->'
 
             twitter "$global_url/$file_url"
 
@@ -743,10 +743,8 @@ all_tags() {
 rebuild_index() {
     # Building list of articles for each of indexies files
     indexnum=0
-    
     articlecount=0
     flist=''
-    number_of_index_articles=4 #TEST!
 
     # Create the content file
     create_index_content() {
