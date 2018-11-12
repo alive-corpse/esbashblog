@@ -510,7 +510,7 @@ create_html_page() {
         cat .footer.html
         # close divs
         echo '</div></div>' # divbody and divbodyholder 
-        disqus_footer
+        [[ $index == no ]] && disqus_footer
         [[ -n $body_end_file ]] && cat "$body_end_file"
         echo '</body></html>'
     } > "$filename"

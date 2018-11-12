@@ -11,11 +11,11 @@ Features for realisation
 - [ ] Dark theme
 - [ ] Markdown support by shell script
 - [ ] Integration with bbhttpd
-- [ ] Different footer templates for posts and other pages (for comment services)
 
 Bugs that should be fixed
 ------------------------
 - [x] Pervent rewriting timestamps from files modify dates
+- [x] Force Disqus comments appeared only on post pages (not on all pages)
 - [ ] Working with drafts
 - [ ] Every rebuilding append empy line before text end comment
 
